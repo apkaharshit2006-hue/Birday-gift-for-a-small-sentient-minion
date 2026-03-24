@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+*{margin:0;padding:0;}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const { ipcRenderer } = require('electron');
+const canvas = document.getElementById('c');
+const C = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.screen.width;
+  canvas.height = window.screen.height;
+}
+
+resize();
+window.addEventListener('resize', resize);
+
+let scribbles = [];
+let lightnings = [];
+let rainbowPuke = [];
+let worldEffects = {};
+
+ipcRenderer.on('overlay-draw', (e, data = {}) => {
+  scribbles = data.scribbles || [];
+  lightnings = data.lightnings || [];
+  rainbowPuke = data.rainbowPuke || [];
+  worldEffects = data.worldEffects || {};
+});
+
+ipcRenderer.on('overlay-clear', () => {
+  scribbles = [];
+  lightnings = [];
+  rainbowPuke = [];
+  worldEffects = {};
+});
+
+function drawPixelMouse(m) {
+  if (!m) return;
+  const lk = Math.sin(m.legPhase || 0) * 3;
+  C.save();
+  C.translate(m.x, m.y);
+  if ((m.vx || 0) < 0) C.scale(-1, 1);
+  C.beginPath(); C.moveTo(-8, 0); C.quadraticCurveTo(-14, 4, -12, 8);
+  C.strokeStyle = '#aaa'; C.lineWidth = 1.5; C.lineCap = 'round'; C.stroke();
+  C.beginPath(); C.ellipse(0, 0, 8, 6, 0, 0, Math.PI * 2);
+  C.fillStyle = m.scared ? '#bbb' : '#999'; C.fill();
+  C.beginPath(); C.ellipse(9, 0, 6, 5, 0, 0, Math.PI * 2);
+  C.fillStyle = m.scared ? '#bbb' : '#999'; C.fill();
+  C.beginPath(); C.ellipse(8, -6, 3, 4, .1, 0, Math.PI * 2); C.fillStyle = '#777'; C.fill();
+  C.beginPath(); C.ellipse(12, -5, 2.5, 3.5, -.1, 0, Math.PI * 2); C.fillStyle = '#777'; C.fill();
+  C.beginPath(); C.ellipse(8, -6, 1.5, 2.5, .1, 0, Math.PI * 2); C.fillStyle = '#ffb3b3'; C.fill();
+  C.beginPath(); C.arc(12, -1, 1.5, 0, Math.PI * 2);
+  C.fillStyle = m.scared ? '#ff0000' : '#222'; C.fill();
+  C.strokeStyle = '#888'; C.lineWidth = 1.5; C.lineCap = 'round';
+  [[-2, 5], [2, 5], [4, 5], [6, 5]].forEach(([lx, ly], i) => {
+    C.beginPath();
+    C.moveTo(lx, ly);
+    C.lineTo(lx + (i % 2 === 0 ? -2 : 2), ly + 4 + lk * (i % 2 === 0 ? 1 : -1));
+    C.stroke();
+  });
+  C.restore();
+}
+
+function drawMug(mug) {
+  if (!mug) return;
+  const mx = mug.x + (mug.wobble || 0) * 0.5;
+  const my = mug.y;
+  (mug.splash || []).forEach(s => {
+    C.beginPath();
+    C.arc(s.x, s.y, 3, 0, Math.PI * 2);
+    C.fillStyle = 'rgba(100,180,255,0.7)';
+    C.fill();
+  });
+  C.beginPath(); C.roundRect(mx - 28, my - 30, 56, 40, 4);
+  C.fillStyle = '#f5f5f5'; C.fill(); C.strokeStyle = '#bbb'; C.lineWidth = 1.5; C.stroke();
+  C.beginPath(); C.roundRect(mx - 25, my - 22, 50, 28, 3);
+  C.fillStyle = 'rgba(255,200,50,0.85)'; C.fill();
+  C.beginPath(); C.ellipse(mx, my - 22, 26, 8, 0, 0, Math.PI * 2);
+  C.fillStyle = 'rgba(255,255,255,0.9)'; C.fill();
+  [[-10, -24], [0, -26], [10, -24], [-5, -22], [7, -23]].forEach(([bx, by]) => {
+    C.beginPath(); C.arc(mx + bx, my + by, 3, 0, Math.PI * 2); C.fillStyle = 'white'; C.fill();
+  });
+  C.beginPath(); C.arc(mx + 34, my - 10, 12, -.6, .6);
+  C.strokeStyle = '#bbb'; C.lineWidth = 5; C.stroke();
+  C.font = 'bold 8px sans-serif'; C.fillStyle = '#aaa'; C.fillText('MUG', mx - 8, my + 5);
+  C.beginPath(); C.ellipse(mx - 10, my - 28, 6, 5, -.2, 0, Math.PI * 2);
+  C.fillStyle = '#d4a017'; C.fill(); C.strokeStyle = '#b8860b'; C.lineWidth = 1; C.stroke();
+  C.beginPath(); C.ellipse(mx + 10, my - 28, 6, 5, .2, 0, Math.PI * 2);
+  C.fillStyle = '#d4a017'; C.fill(); C.strokeStyle = '#b8860b'; C.lineWidth = 1; C.stroke();
+  C.beginPath(); C.ellipse(mx, my - 34, 14, 10, 0, 0, Math.PI * 2);
+  C.fillStyle = '#d4a017'; C.fill(); C.strokeStyle = '#b8860b'; C.lineWidth = 1; C.stroke();
+  [-5, 5].forEach(ex => { C.beginPath(); C.arc(mx + ex, my - 36, 2.5, 0, Math.PI * 2); C.fillStyle = '#1a0a00'; C.fill(); });
+  C.beginPath(); C.ellipse(mx, my - 30, 5, 3, 0, 0, Math.PI * 2); C.fillStyle = '#f5d76e'; C.fill();
+  C.beginPath(); C.ellipse(mx, my - 32, 3, 2, 0, 0, Math.PI * 2); C.fillStyle = '#e8c050'; C.fill();
+}
+
+function drawBone(bone) {
+  if (!bone) return;
+  C.save();
+  C.translate(bone.x, bone.y);
+  C.rotate(bone.angle || 0);
+  C.fillStyle = '#f5f0e0'; C.strokeStyle = '#ccc'; C.lineWidth = 1;
+  C.fillRect(-10, -3, 20, 6);
+  [[-10, 0], [10, 0]].forEach(([bx, by]) => {
+    C.beginPath(); C.arc(bx, by, 5, 0, Math.PI * 2); C.fill(); C.stroke();
+    C.beginPath(); C.arc(bx, by - 4, 3, 0, Math.PI * 2); C.fill(); C.stroke();
+    C.beginPath(); C.arc(bx, by + 4, 3, 0, Math.PI * 2); C.fill(); C.stroke();
+  });
+  C.restore();
+}
+
+function drawCupcake(c) {
+  if (!c || c.eaten) return;
+  C.save();
+  C.translate(c.x, c.y);
+  C.beginPath(); C.moveTo(-14, 0); C.lineTo(-10, -16); C.lineTo(10, -16); C.lineTo(14, 0); C.closePath();
+  C.fillStyle = '#ff80ab'; C.fill(); C.strokeStyle = '#f06292'; C.lineWidth = 1; C.stroke();
+  C.strokeStyle = '#f48fb1'; C.lineWidth = .8;
+  [-7, 0, 7].forEach(lx => {
+    C.beginPath();
+    C.moveTo(lx, -16 + (lx === 0 ? 0 : 2));
+    C.lineTo(lx + (lx < 0 ? -4 : lx > 0 ? 4 : 0), 0);
+    C.stroke();
+  });
+  C.beginPath(); C.ellipse(0, -16, 12, 6, 0, 0, Math.PI * 2);
+  C.fillStyle = '#ffcc02'; C.fill(); C.strokeStyle = '#e6b800'; C.lineWidth = 1; C.stroke();
+  C.beginPath(); C.moveTo(-10, -16);
+  C.bezierCurveTo(-12, -28, -6, -30, 0, -26);
+  C.bezierCurveTo(6, -30, 12, -28, 10, -16);
+  C.fillStyle = '#fff'; C.fill(); C.strokeStyle = '#e0e0e0'; C.lineWidth = 1; C.stroke();
+  C.beginPath(); C.arc(0, -28, 4, 0, Math.PI * 2); C.fillStyle = '#e53935'; C.fill();
+  C.beginPath(); C.moveTo(0, -24); C.quadraticCurveTo(3, -20, 2, -18); C.strokeStyle = '#388e3c'; C.lineWidth = 1.5; C.stroke();
+  ['#ff4081', '#00bcd4', '#ffeb3b', '#76ff03'].forEach((col, i) => {
+    C.save(); C.translate(-5 + i * 3, -17 + i * 1.5); C.rotate(i * .8);
+    C.fillStyle = col; C.fillRect(-3, -1, 6, 2); C.restore();
+  });
+  C.restore();
+}
+
+function drawYarnBall(ball) {
+  C.beginPath(); C.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
+  C.fillStyle = ball.color; C.fill();
+  C.beginPath(); C.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
+  C.strokeStyle = 'rgba(0,0,0,.15)'; C.lineWidth = 1; C.stroke();
+}
+
+function drawBug(bug, t) {
+  if (bug.dead) return;
+  C.save();
+  C.translate(bug.x, bug.y);
+  C.beginPath(); C.ellipse(-5, -3 + Math.sin(t * .3) * 2, 5, 3, .2, 0, Math.PI * 2); C.fillStyle = 'rgba(150,200,255,0.5)'; C.fill();
+  C.beginPath(); C.ellipse(5, -3 + Math.sin(t * .3) * 2, 5, 3, -.2, 0, Math.PI * 2); C.fillStyle = 'rgba(150,200,255,0.5)'; C.fill();
+  C.beginPath(); C.ellipse(0, 0, 3, 5, 0, 0, Math.PI * 2); C.fillStyle = '#333'; C.fill();
+  C.restore();
+}
+
+function drawHuman(human) {
+  if (human.eaten) return;
+  const phase = human.legPhase || 0;
+  C.save();
+  C.translate(human.x, human.y);
+  C.beginPath(); C.arc(0, -18, 5, 0, Math.PI * 2); C.fillStyle = '#ffcc80'; C.fill();
+  C.fillStyle = '#1976d2'; C.fillRect(-5, -12, 10, 12);
+  const lk = Math.sin(phase) * 5;
+  C.fillStyle = '#333'; C.fillRect(-4, 0, 4, 8 + lk); C.fillRect(0, 0, 4, 8 - lk);
+  C.fillStyle = '#ffcc80'; C.fillRect(-8, -10, 3, 8); C.fillRect(5, -10, 3, 8);
+  C.restore();
+}
+
+function drawMusicNote(note) {
+  C.save();
+  C.globalAlpha = note.life / note.maxLife;
+  C.font = `bold ${12 + note.life / note.maxLife * 6}px serif`;
+  C.fillStyle = note.color;
+  C.fillText(note.note, note.x, note.y);
+  C.restore();
+}
+
+function drawKetchup(ketchup) {
+  if (!ketchup) return;
+  C.save();
+  C.translate(ketchup.x, ketchup.y);
+  C.fillStyle = '#c62828'; C.beginPath(); C.roundRect(-8, -20, 16, 30, 4); C.fill();
+  C.fillStyle = '#ef9a9a'; C.fillRect(-5, -18, 6, 24);
+  C.fillStyle = '#fff'; C.beginPath(); C.roundRect(-5, -25, 10, 8, 3); C.fill();
+  C.fillStyle = '#b71c1c'; C.font = 'bold 9px sans-serif'; C.fillText('H', -3, -18);
+  C.restore();
+}
+
+function draw() {
+  C.clearRect(0, 0, canvas.width, canvas.height);
+
+  scribbles.forEach(s => {
+    if (!s.pts || s.pts.length < 2) return;
+    const visible = Math.floor(s.drawn || s.pts.length);
+    if (visible < 1) return;
+    const fade = s.permanent !== false ? 1 : Math.max(0, s.fade || 0);
+    if (fade <= 0) return;
+    C.save();
+    C.globalAlpha = fade * 0.88;
+    C.strokeStyle = '#1a1a1a';
+    C.lineWidth = s.strokeW || 2.5;
+    C.lineCap = 'round';
+    C.lineJoin = 'round';
+    C.beginPath();
+    C.moveTo(s.pts[0].x, s.pts[0].y);
+    for (let i = 1; i < Math.min(visible, s.pts.length); i++) {
+      C.lineTo(s.pts[i].x, s.pts[i].y);
+    }
+    C.stroke();
+    C.restore();
+  });
+
+  lightnings.forEach(l => {
+    if (!l.segs || !l.segs.length) return;
+    C.save();
+    C.globalAlpha = l.life / l.maxLife;
+    C.strokeStyle = `hsl(55,100%,${55 + Math.round((l.life / l.maxLife) * 25)}%)`;
+    C.lineWidth = 2.5;
+    C.shadowColor = '#ffff00';
+    C.shadowBlur = 14;
+    C.beginPath();
+    C.moveTo(l.x, 0);
+    l.segs.forEach(s => C.lineTo(s.x, s.y));
+    C.stroke();
+    C.restore();
+  });
+
+  rainbowPuke.forEach(p => {
+    if (!p.life || !p.maxLife) return;
+    C.globalAlpha = p.life / p.maxLife;
+    C.beginPath();
+    C.arc(p.x, p.y, (p.size || 6) * 0.5, 0, Math.PI * 2);
+    C.fillStyle = p.color || '#ff0080';
+    C.fill();
+  });
+  C.globalAlpha = 1;
+
+  drawPixelMouse(worldEffects.pixelMouse);
+  drawMug(worldEffects.mug);
+  drawBone(worldEffects.bone);
+  drawCupcake(worldEffects.cupcake);
+  drawKetchup(worldEffects.ketchup);
+  (worldEffects.yarnBalls || []).forEach(drawYarnBall);
+  (worldEffects.bugs || []).forEach(b => drawBug(b, performance.now() * 0.01));
+  (worldEffects.humans || []).forEach(drawHuman);
+  (worldEffects.musicNotes || []).forEach(drawMusicNote);
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

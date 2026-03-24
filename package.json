@@ -1,0 +1,35 @@
+{
+  "name": "desktop-pets",
+  "version": "2.0.0",
+  "description": "5 interactive desktop pets",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "license-manager": "electron license-manager.js",
+    "build": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.desktoppets.app",
+    "productName": "Desktop Pets",
+    "files": [
+      "main.js",
+      "license-manager.js",
+      "license.js",
+      "app-settings.js",
+      "pet-ai.js",
+      "scribble-fix.js",
+      "index.html",
+      "auth.html",
+      "chat.html",
+      "license-manager.html",
+      "deactivate-window.html",
+      "overlay.html",
+      "settings.html"
+    ],
+    "directories": { "output": "dist" }
+  }
+}

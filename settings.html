@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Desktop Pets Settings</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html { height:600px; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  background: #170f2e;
+  color: #e8deff;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, #2d1b4e 0%, #1a1030 100%);
+  border-bottom: 1px solid rgba(150,100,255,0.2);
+  flex-shrink: 0;
+}
+.header h1 {
+  font-size: 18px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.header p { font-size: 12px; color: rgba(200,175,255,0.55); }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 8px;
+}
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb { background: rgba(130,100,255,0.35); border-radius: 3px; }
+
+.section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  color: rgba(180,150,255,0.5); text-transform: uppercase;
+  padding: 16px 24px 10px;
+}
+
+/* Animal grid — 4 per row, consistent size */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+}
+.animal-card {
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(120,80,220,0.2);
+  border-radius: 14px;
+  padding: 14px 8px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.animal-card:hover {
+  background: rgba(120,80,220,0.18);
+  border-color: rgba(160,120,255,0.55);
+  transform: translateY(-2px);
+}
+.animal-card.active {
+  background: rgba(120,80,220,0.32);
+  border-color: #a78bfa;
+  box-shadow: 0 0 14px rgba(130,100,255,0.35);
+}
+.animal-card .emoji {
+  font-size: 26px;
+  display: block;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+.animal-card .name {
+  font-size: 11px;
+  color: rgba(220,200,255,0.8);
+  font-weight: 500;
+}
+.animal-card.active .name { color: #fff; font-weight: 600; }
+
+/* Behaviours */
+.behaviours-section { padding: 0 20px; }
+.behaviours-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(120,80,220,0.18);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.global-box {
+  margin: 0 20px 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(120,80,220,0.18);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.behaviour-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.1s;
+}
+.behaviour-row:last-child { border-bottom: none; }
+.behaviour-row:hover { background: rgba(255,255,255,0.03); }
+.behaviour-info { flex: 1; min-width: 0; }
+.behaviour-name {
+  font-size: 13px; color: #e0d0ff; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.behaviour-desc {
+  font-size: 11px; color: rgba(180,155,220,0.5);
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Toggle */
+.toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track {
+  position:absolute; inset:0;
+  background: rgba(255,255,255,0.12);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.toggle input:checked + .toggle-track {
+  background: #7c4dff;
+  border-color: #9c6fff;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+}
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(18px);
+}
+
+/* Bottom bar — fixed at bottom */
+.bottom-bar {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(120,80,220,0.18);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.btn {
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.15s;
+  border: 1px solid;
+}
+.btn-quit {
+  background: rgba(220,50,50,0.12);
+  color: #ff8080;
+  border-color: rgba(220,50,50,0.3);
+}
+.btn-quit:hover { background: rgba(220,50,50,0.28); }
+.btn-close {
+  flex: 1;
+  background: rgba(100,70,210,0.2);
+  color: #c4b0ff;
+  border-color: rgba(120,80,220,0.35);
+  text-align: center;
+}
+.btn-close:hover { background: rgba(100,70,210,0.38); }
+.hotkey-hint {
+  font-size: 10px;
+  color: rgba(180,155,220,0.35);
+  line-height: 1.5;
+  padding: 0 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🐾 Desktop Pets</h1>
+  <p>Click a pet to switch instantly · Toggle behaviours on/off</p>
+</div>
+
+<div class="content">
+  <div class="section-title">App</div>
+  <div class="global-box">
+    <div class="behaviour-row">
+      <div class="behaviour-info">
+        <div class="behaviour-name">AI Chat + Autonomous Actions</div>
+        <div class="behaviour-desc">Turn Ollama-powered chat and self-driven AI behavior on or off</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="ai-enabled" checked>
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  </div>
+
+  <div class="section-title">Choose Your Pet</div>
+  <div class="animal-grid" id="animal-grid">
+    <div class="animal-card active" data-pet="cat">
+      <span class="emoji">🐈</span><span class="name">Cat</span>
+    </div>
+    <div class="animal-card" data-pet="dog">
+      <span class="emoji">🐕</span><span class="name">Dog</span>
+    </div>
+    <div class="animal-card" data-pet="lizard">
+      <span class="emoji">🦎</span><span class="name">Lizard</span>
+    </div>
+    <div class="animal-card" data-pet="snake">
+      <span class="emoji">🐍</span><span class="name">Snake</span>
+    </div>
+    <div class="animal-card" data-pet="unicorn">
+      <span class="emoji">🦄</span><span class="name">Unicorn</span>
+    </div>
+    <div class="animal-card" data-pet="jigglypuff">
+      <span class="emoji">🎤</span><span class="name">Jigglypuff</span>
+    </div>
+    <div class="animal-card" data-pet="pikachu">
+      <span class="emoji">⚡</span><span class="name">Pikachu</span>
+    </div>
+  </div>
+
+  <div class="section-title">Behaviours — <span id="pet-label">Cat</span></div>
+  <div class="behaviours-section">
+    <div class="behaviours-box" id="behaviours-box"></div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="btn btn-quit" id="btn-quit">⏻  Quit App</button>
+  <div class="hotkey-hint">Space = special action<br>M = Jigglypuff mic</div>
+  <button class="btn btn-close" id="btn-close">✓  Close Settings</button>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+
+const PET_BEHAVIOURS = {
+  cat: [
+    { id:'scratch', name:'Screen scratching 🐾',    desc:'Claws at screen edges, leaves marks'   },
+    { id:'yarn',    name:'Play with yarn balls 🧶',  desc:'Bats colourful yarn balls around'       },
+    { id:'mouse',   name:'Chase pixel mouse 🐁',     desc:'Tiny mouse runs — cat hunts it'         },
+    { id:'yawn',    name:'Random yawning',           desc:'Yawns and stretches occasionally'       },
+    { id:'purr',    name:'Purring hearts ♥',         desc:'Hearts float when petted'               },
+  ],
+  dog: [
+    { id:'fetch',   name:'Fetch bone → cursor 🦴',   desc:'Space to throw, dog returns to cursor' },
+    { id:'mug',     name:'Play in beer mug 🍺',       desc:'Dog jumps in, face peeks over rim'      },
+    { id:'howl',    name:'Howling at the moon 🌕',    desc:'Random howl with musical notes'         },
+    { id:'tongue',  name:'Tongue out when running',  desc:'Tongue flaps at speed'                  },
+  ],
+  lizard: [
+    { id:'bugs',       name:'Hunt flying bugs 🦟',   desc:'Bugs fly across, lizard snaps them'    },
+    { id:'wallcrawl',  name:'Wall crawling',          desc:'Climbs all 4 screen edges'              },
+    { id:'tongue',     name:'Tongue flickering',      desc:'Forked tongue flicks rapidly'           },
+    { id:'scales',     name:'Scale pattern',          desc:'Animated scales on body'                },
+  ],
+  snake: [
+    { id:'hiss',    name:'Hissing (click snake) 🐍',  desc:'Click to trigger hiss + text'          },
+    { id:'humans',  name:'Eat & vomit humans 👤',     desc:'Pixel humans get swallowed & barfed'   },
+    { id:'orbit',   name:'Orbit desktop icons 🔄',    desc:'Circles around icon positions'         },
+    { id:'slither', name:'Full-screen slithering',    desc:'Roams anywhere on screen'              },
+  ],
+  unicorn: [
+    { id:'rainbow', name:'Rainbow vomit (Space) 🌈',  desc:'Space bar triggers rainbow barf'       },
+    { id:'cupcake', name:'Eat cupcakes 🧁',            desc:'Cupcakes appear, unicorn devours them' },
+    { id:'gallop',  name:'Galloping animation',        desc:'Full leg gallop when running'          },
+    { id:'shimmer', name:'Body shimmer ✨',             desc:'Rainbow sparkle spots appear'         },
+  ],
+  jigglypuff: [
+    { id:'sing',    name:'Singing with notes ♪♫',     desc:'Musical notes float when singing'      },
+    { id:'mic',     name:'Mic rage — press M key',     desc:'Take mic → angry + screen scribbles'  },
+    { id:'blush',   name:'Cheek blush circles',        desc:'Pink blush on cheeks'                  },
+    { id:'bounce',  name:'Jiggly body bounce',         desc:'Wobbly breathing animation'            },
+  ],
+  pikachu: [
+    { id:'thunder', name:'Thunderbolt — Space ⚡',     desc:'Lightning crashes down from sky'       },
+    { id:'ketchup', name:'Chase ketchup bottle 🍅',    desc:'Ketchup rolls past — Pikachu sprints' },
+    { id:'faces',   name:'5 anime meme faces',         desc:'Click Pikachu to cycle expressions'   },
+    { id:'cheeks',  name:'Electric cheek sparks',      desc:'Red cheeks spark with ⚡'              },
+  ],
+};
+
+const petNames = {
+  cat:'Cat', dog:'Dog', lizard:'Lizard', snake:'Snake',
+  unicorn:'Unicorn', jigglypuff:'Jigglypuff', pikachu:'Pikachu'
+};
+
+let currentPet = 'cat';
+let appSettings = { aiEnabled: true };
+const behaviourStates = {};
+Object.keys(PET_BEHAVIOURS).forEach(pet => {
+  behaviourStates[pet] = {};
+  PET_BEHAVIOURS[pet].forEach(b => { behaviourStates[pet][b.id] = true; });
+});
+
+function renderBehaviours(pet) {
+  document.getElementById('pet-label').textContent = petNames[pet] || pet;
+  const box = document.getElementById('behaviours-box');
+  const list = PET_BEHAVIOURS[pet] || [];
+  box.innerHTML = list.map(b => `
+    <div class="behaviour-row">
+      <div class="behaviour-info">
+        <div class="behaviour-name">${b.name}</div>
+        <div class="behaviour-desc">${b.desc}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" data-id="${b.id}" ${behaviourStates[pet][b.id] ? 'checked' : ''}>
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      behaviourStates[currentPet][cb.dataset.id] = cb.checked;
+      ipcRenderer.send('toggle-behaviour', { pet: currentPet, id: cb.dataset.id, enabled: cb.checked });
+    });
+  });
+}
+
+document.querySelectorAll('.animal-card').forEach(card => {
+  card.addEventListener('click', () => {
+    currentPet = card.dataset.pet;
+    document.querySelectorAll('.animal-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    renderBehaviours(currentPet);
+    ipcRenderer.send('switch-pet', currentPet);
+  });
+});
+
+document.getElementById('btn-quit').addEventListener('click', () => ipcRenderer.send('quit-app'));
+document.getElementById('btn-close').addEventListener('click', () => window.close());
+
+const aiToggle = document.getElementById('ai-enabled');
+aiToggle.addEventListener('change', () => {
+  appSettings.aiEnabled = aiToggle.checked;
+  ipcRenderer.send('set-ai-enabled', aiToggle.checked);
+});
+
+ipcRenderer.on('app-settings-updated', (e, settings) => {
+  appSettings = { ...appSettings, ...(settings || {}) };
+  aiToggle.checked = !!appSettings.aiEnabled;
+});
+
+renderBehaviours('cat');
+</script>
+</body>
+</html>

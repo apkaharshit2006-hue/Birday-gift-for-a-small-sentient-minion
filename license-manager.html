@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Desktop Pets License Manager</title>
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(214, 149, 81, 0.18), transparent 32%),
+    linear-gradient(180deg, #f7f2e8 0%, #efe6d6 100%);
+  color: #2d2013;
+  font-family: Georgia, "Times New Roman", serif;
+}
+body {
+  padding: 28px;
+}
+.shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 22px;
+}
+.panel {
+  background: rgba(255, 250, 242, 0.92);
+  border: 1px solid rgba(96, 62, 29, 0.16);
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(88, 58, 30, 0.10);
+}
+.sidebar {
+  padding: 24px;
+  position: sticky;
+  top: 28px;
+  align-self: start;
+}
+.title {
+  font-size: 2rem;
+  font-style: italic;
+  color: #5d3114;
+  margin: 0 0 8px;
+}
+.sub {
+  margin: 0 0 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #70533d;
+}
+.label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a5b42;
+}
+input, textarea, select {
+  width: 100%;
+  border: 1px solid #d7c4ad;
+  background: #fffdf8;
+  color: #322315;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+}
+textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+}
+button:hover { transform: translateY(-1px); }
+button:disabled { opacity: 0.5; cursor: default; transform: none; }
+.primary {
+  background: linear-gradient(135deg, #8a4c1f, #ba7a2f);
+  color: #fff7ea;
+  box-shadow: 0 10px 22px rgba(163, 103, 32, 0.20);
+}
+.secondary {
+  background: #eadfce;
+  color: #5a3b23;
+}
+.danger {
+  background: #7c281d;
+  color: #fff5f2;
+}
+.main {
+  padding: 22px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.search {
+  max-width: 320px;
+}
+.status {
+  min-height: 24px;
+  font-size: 0.92rem;
+  color: #6c533c;
+}
+.status.error { color: #a13428; }
+.status.success { color: #2f6b38; }
+.table-wrap {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(96, 62, 29, 0.12);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.75);
+}
+thead {
+  background: #ead9c1;
+}
+th, td {
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.92rem;
+}
+th {
+  color: #5f452d;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+tbody tr:nth-child(even) {
+  background: rgba(247, 241, 231, 0.8);
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pill.active { background: #dcedd6; color: #2f6b38; }
+.pill.revoked { background: #f6d8d3; color: #8d2f23; }
+.pill.bound { background: #d9e7f6; color: #22527c; }
+.pill.unbound { background: #efe5d7; color: #7a5b42; }
+.hash {
+  font-family: Menlo, Monaco, monospace;
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.actions button {
+  padding: 8px 11px;
+  font-size: 0.82rem;
+}
+.empty {
+  padding: 34px;
+  text-align: center;
+  color: #7c6551;
+}
+.latest {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff8ed;
+  border: 1px dashed #d2b48a;
+}
+.latest strong {
+  display: block;
+  margin-bottom: 6px;
+}
+.latest code {
+  display: block;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e3d3bd;
+  font-size: 0.92rem;
+  word-break: break-all;
+}
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .search { max-width: none; }
+}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel sidebar">
+      <h1 class="title">License Manager</h1>
+      <p class="sub">Create and manage Desktop Pets license keys from the same JSONBin backend the app uses.</p>
+
+      <label class="label" for="custom-key">Custom key (optional)</label>
+      <input id="custom-key" placeholder="Leave blank to auto-generate a key" />
+
+      <label class="label" for="label">Label</label>
+      <input id="label" placeholder="Example: Creator edition, Beta 3, Client A" />
+
+      <label class="label" for="note">Note</label>
+      <textarea id="note" placeholder="Optional note about this key"></textarea>
+
+      <div class="buttons">
+        <button id="create-btn" class="primary">Create Key</button>
+        <button id="refresh-btn" class="secondary">Refresh</button>
+      </div>
+
+      <div id="latest" class="latest" style="display:none;"></div>
+    </section>
+
+    <section class="panel main">
+      <div class="toolbar">
+        <div id="status" class="status">Loading licenses…</div>
+        <input id="search" class="search" placeholder="Search label, note, hash, or fingerprint" />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Label</th>
+              <th>Status</th>
+              <th>Device</th>
+              <th>Hash</th>
+              <th>Dates</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="6" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+<script>
+const { ipcRenderer, clipboard } = require('electron');
+
+const rows = document.getElementById('rows');
+const statusEl = document.getElementById('status');
+const searchEl = document.getElementById('search');
+const customKeyEl = document.getElementById('custom-key');
+const labelEl = document.getElementById('label');
+const noteEl = document.getElementById('note');
+const latestEl = document.getElementById('latest');
+const createBtn = document.getElementById('create-btn');
+const refreshBtn = document.getElementById('refresh-btn');
+
+let licenses = [];
+
+function setStatus(msg, cls) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function fmtDate(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString();
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function filteredLicenses() {
+  const q = searchEl.value.trim().toLowerCase();
+  if (!q) return licenses;
+  return licenses.filter(license => (
+    (license.label || '').toLowerCase().includes(q) ||
+    (license.note || '').toLowerCase().includes(q) ||
+    (license.hash || '').toLowerCase().includes(q) ||
+    (license.fingerprint || '').toLowerCase().includes(q)
+  ));
+}
+
+function renderRows() {
+  const items = filteredLicenses();
+  if (!items.length) {
+    rows.innerHTML = '<tr><td colspan="6" class="empty">No license keys match this view.</td></tr>';
+    return;
+  }
+
+  rows.innerHTML = items.map(license => `
+    <tr>
+      <td>
+        <strong>${escapeHtml(license.label || 'Untitled key')}</strong><br>
+        <span>${escapeHtml(license.note || 'No note')}</span>
+      </td>
+      <td>
+        <span class="pill ${license.revoked ? 'revoked' : 'active'}">${license.revoked ? 'Revoked' : 'Active'}</span>
+      </td>
+      <td>
+        <span class="pill ${license.deviceBound ? 'bound' : 'unbound'}">${license.deviceBound ? 'Bound' : 'Unbound'}</span>
+        <div class="hash">${escapeHtml(license.fingerprint || 'No device attached')}</div>
+      </td>
+      <td><div class="hash">${escapeHtml(license.hash)}</div></td>
+      <td>
+        Created: ${escapeHtml(fmtDate(license.createdAt))}<br>
+        Revoked: ${escapeHtml(fmtDate(license.revokedAt))}
+      </td>
+      <td>
+        <div class="actions">
+          <button data-action="${license.revoked ? 'restore' : 'revoke'}" data-hash="${escapeHtml(license.hash)}" class="${license.revoked ? 'secondary' : 'danger'}">${license.revoked ? 'Restore' : 'Revoke'}</button>
+          <button data-action="unbind" data-hash="${escapeHtml(license.hash)}" class="secondary">Unbind</button>
+          <button data-action="copy-hash" data-hash="${escapeHtml(license.hash)}" class="secondary">Copy Hash</button>
+          <button data-action="delete" data-hash="${escapeHtml(license.hash)}" class="danger">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadLicenses(message) {
+  setStatus(message || 'Loading licenses…');
+  const res = await ipcRenderer.invoke('license-manager:list');
+  if (!res.ok) {
+    licenses = [];
+    renderRows();
+    setStatus(res.msg || 'Failed to load licenses.', 'error');
+    return;
+  }
+  licenses = (res.licenses || []).sort((a, b) => {
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bTime - aTime;
+  });
+  renderRows();
+  setStatus(`Loaded ${licenses.length} license key${licenses.length === 1 ? '' : 's'}.`, 'success');
+}
+
+function showLatestKey(key, label) {
+  latestEl.style.display = 'block';
+  latestEl.innerHTML = `
+    <strong>Newest key${label ? ' for ' + escapeHtml(label) : ''}</strong>
+    Save this now. The manager stores only its hash remotely.
+    <code>${escapeHtml(key)}</code>
+    <div class="buttons" style="margin-top:10px;">
+      <button id="copy-latest" class="primary">Copy Key</button>
+    </div>
+  `;
+  document.getElementById('copy-latest').addEventListener('click', () => {
+    clipboard.writeText(key);
+    setStatus('Newest key copied to clipboard.', 'success');
+  });
+}
+
+async function createKey() {
+  createBtn.disabled = true;
+  setStatus('Creating license key…');
+  const res = await ipcRenderer.invoke('license-manager:create', {
+    key: customKeyEl.value,
+    label: labelEl.value,
+    note: noteEl.value,
+  });
+  createBtn.disabled = false;
+  if (!res.ok) {
+    setStatus(res.msg || 'Failed to create key.', 'error');
+    return;
+  }
+  customKeyEl.value = '';
+  labelEl.value = '';
+  noteEl.value = '';
+  showLatestKey(res.key, res.license && res.license.label);
+  setStatus('License key created.', 'success');
+  await loadLicenses('Refreshing licenses…');
+}
+
+async function handleAction(action, hash) {
+  if (action === 'copy-hash') {
+    clipboard.writeText(hash);
+    setStatus('Hash copied to clipboard.', 'success');
+    return;
+  }
+  if (action === 'delete' && !window.confirm('Delete this license key permanently?')) return;
+  if (action === 'revoke' && !window.confirm('Revoke this key now? Active devices will lose access on the next check.')) return;
+  if (action === 'restore' && !window.confirm('Restore this key and allow it to activate again?')) return;
+  if (action === 'unbind' && !window.confirm('Remove this key from its current device binding?')) return;
+
+  const channel = {
+    revoke: 'license-manager:revoke',
+    restore: 'license-manager:restore',
+    delete: 'license-manager:delete',
+    unbind: 'license-manager:unbind',
+  }[action];
+
+  if (!channel) return;
+  setStatus('Saving changes…');
+  const res = await ipcRenderer.invoke(channel, hash);
+  if (!res.ok) {
+    setStatus(res.msg || 'Action failed.', 'error');
+    return;
+  }
+  await loadLicenses('Refreshing licenses…');
+}
+
+createBtn.addEventListener('click', createKey);
+refreshBtn.addEventListener('click', () => loadLicenses('Refreshing licenses…'));
+searchEl.addEventListener('input', renderRows);
+rows.addEventListener('click', event => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  handleAction(button.dataset.action, button.dataset.hash);
+});
+
+loadLicenses();
+</script>
+</body>
+</html>

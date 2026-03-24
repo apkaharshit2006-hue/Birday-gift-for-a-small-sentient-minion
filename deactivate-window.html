@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  width:340px;height:200px;
+  background:#0d0818;
+  font-family:-apple-system,'Helvetica Neue',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;color:#e8deff;
+  user-select:none;
+}
+.icon{font-size:40px;}
+h2{font-size:15px;font-weight:600;color:#ff8080;}
+p{font-size:11px;color:rgba(180,150,255,0.5);text-align:center;padding:0 24px;line-height:1.6;}
+button{
+  padding:8px 28px;background:rgba(220,50,50,0.15);
+  border:1px solid rgba(220,50,50,0.3);border-radius:10px;
+  color:#ff8080;font-size:12px;cursor:pointer;font-family:inherit;
+}
+button:hover{background:rgba(220,50,50,0.3);}
+</style>
+</head>
+<body>
+<div class="icon">🔒</div>
+<h2>Access Deactivated</h2>
+<p>This application has been remotely deactivated.<br>Please contact the owner for assistance.</p>
+<button onclick="require('electron').ipcRenderer.send('quit-app')">Close</button>
+</body>
+</html>
