@@ -27,12 +27,14 @@ let scribbles = [];
 let lightnings = [];
 let rainbowPuke = [];
 let worldEffects = {};
+let scratchMarks = [];
 
 ipcRenderer.on('overlay-draw', (e, data = {}) => {
   scribbles = data.scribbles || [];
   lightnings = data.lightnings || [];
   rainbowPuke = data.rainbowPuke || [];
   worldEffects = data.worldEffects || {};
+  scratchMarks = data.scratchMarks || [];
 });
 
 ipcRenderer.on('overlay-clear', () => {
@@ -40,6 +42,23 @@ ipcRenderer.on('overlay-clear', () => {
   lightnings = [];
   rainbowPuke = [];
   worldEffects = {};
+  scratchMarks = [];
+});
+
+function sendPointer(type, e) {
+  ipcRenderer.send('overlay-input', {
+    type,
+    x: e.screenX,
+    y: e.screenY,
+  });
+}
+
+window.addEventListener('mousemove', (e) => sendPointer('move', e));
+window.addEventListener('mousedown', (e) => {
+  if (e.button === 0) sendPointer('down', e);
+});
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 0) sendPointer('up', e);
 });
 
 function drawPixelMouse(m) {
@@ -159,6 +178,13 @@ function drawBug(bug, t) {
   C.beginPath(); C.ellipse(-5, -3 + Math.sin(t * .3) * 2, 5, 3, .2, 0, Math.PI * 2); C.fillStyle = 'rgba(150,200,255,0.5)'; C.fill();
   C.beginPath(); C.ellipse(5, -3 + Math.sin(t * .3) * 2, 5, 3, -.2, 0, Math.PI * 2); C.fillStyle = 'rgba(150,200,255,0.5)'; C.fill();
   C.beginPath(); C.ellipse(0, 0, 3, 5, 0, 0, Math.PI * 2); C.fillStyle = '#333'; C.fill();
+  if (bug.stunned) {
+    C.beginPath();
+    C.arc(0, 0, 9, 0, Math.PI * 2);
+    C.strokeStyle = 'rgba(255,235,59,0.9)';
+    C.lineWidth = 2;
+    C.stroke();
+  }
   C.restore();
 }
 
@@ -193,6 +219,150 @@ function drawKetchup(ketchup) {
   C.fillStyle = '#fff'; C.beginPath(); C.roundRect(-5, -25, 10, 8, 3); C.fill();
   C.fillStyle = '#b71c1c'; C.font = 'bold 9px sans-serif'; C.fillText('H', -3, -18);
   C.restore();
+}
+
+function drawScratchMarks() {
+  scratchMarks.forEach(m => {
+    C.save();
+    C.globalAlpha = m.alpha || 0.7;
+    C.strokeStyle = '#ff4444';
+    C.lineWidth = 2;
+    C.lineCap = 'round';
+    (m.lines || []).forEach(l => {
+      C.beginPath();
+      C.moveTo(l[0], l[1]);
+      C.lineTo(l[2], l[3]);
+      C.stroke();
+    });
+    C.restore();
+  });
+}
+
+function drawBattery(b) {
+  if (!b || b.powered) return;
+  C.save();
+  C.translate(b.x, b.y);
+  C.fillStyle = '#222';
+  C.fillRect(-14, -8, 26, 16);
+  C.fillRect(12, -4, 4, 8);
+  C.fillStyle = '#b71c1c';
+  C.fillRect(-12, -6, 10, 12);
+  C.strokeStyle = '#555';
+  C.lineWidth = 1.5;
+  C.strokeRect(-14, -8, 26, 16);
+  C.restore();
+}
+
+function drawEgg(e) {
+  if (!e) return;
+  C.save();
+  C.translate(e.x, e.y);
+  C.beginPath();
+  C.ellipse(0, 0, 8, 10, 0, 0, Math.PI * 2);
+  C.fillStyle = '#fff3e0';
+  C.fill();
+  C.strokeStyle = '#d7ccc8';
+  C.lineWidth = 1;
+  C.stroke();
+  C.restore();
+}
+
+function drawStar(s) {
+  if (!s) return;
+  C.save();
+  C.translate(s.x, s.y);
+  C.rotate(s.rot || 0);
+  C.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = (Math.PI * 2 * i) / 5;
+    const r = i % 2 === 0 ? 6 : 3;
+    C.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  C.closePath();
+  C.fillStyle = s.color || '#ffd54f';
+  C.fill();
+  C.restore();
+}
+
+function drawSnakeBody(body) {
+  if (!body || !body.length) return;
+  body.forEach((p, i) => {
+    const ratio = i / body.length;
+    const r = 4 + (1 - ratio) * 4;
+    C.beginPath();
+    C.arc(p.x, p.y, r, 0, Math.PI * 2);
+    C.fillStyle = `rgba(30, ${120 + Math.floor(80 * ratio)}, 30, 0.9)`;
+    C.fill();
+  });
+}
+
+function drawGameHUD(game) {
+  if (!game || !game.active) return;
+  const pad = 10;
+  C.save();
+  C.globalAlpha = 0.85;
+  C.fillStyle = 'rgba(20,20,30,0.55)';
+  C.roundRect(12, 10, 190, 46, 8);
+  C.fill();
+  C.globalAlpha = 1;
+  C.fillStyle = '#fff';
+  C.font = 'bold 14px sans-serif';
+  C.fillText(`Score: ${game.score ?? 0}`, 22, 30);
+  C.font = '12px sans-serif';
+  C.fillStyle = '#d0d0ff';
+  C.fillText(`Time: ${game.timeLeft ?? 0}s`, 22, 48);
+  if (game.combo) {
+    C.fillStyle = '#ffeb3b';
+    C.fillText(`Combo: ${game.combo}`, 120, 30);
+  }
+  if (game.miss !== undefined) {
+    C.fillStyle = '#ff8a80';
+    C.fillText(`Miss: ${game.miss}`, 120, 48);
+  }
+  if (game.charge !== undefined) {
+    C.fillStyle = '#80deea';
+    C.fillText(`Charge: ${Math.round(game.charge)}`, 120, 48);
+  }
+  C.restore();
+}
+
+function drawGameOverlay(game) {
+  if (!game || !game.active) return;
+  if (game.type === 'cat') {
+    (game.mice || []).forEach(m => {
+      if (m.visible) drawPixelMouse(m);
+    });
+  }
+  if (game.type === 'dog' && game.bone) {
+    drawBone(game.bone);
+  }
+  if (game.type === 'lizard' && game.tongue) {
+    const t = game.tongue;
+    C.save();
+    C.strokeStyle = '#ff6f6f';
+    C.lineWidth = 4;
+    C.lineCap = 'round';
+    C.beginPath();
+    C.moveTo(t.sx, t.sy);
+    C.lineTo(t.ex, t.ey);
+    C.stroke();
+    C.restore();
+  }
+  if (game.type === 'snake') {
+    drawSnakeBody(game.body || []);
+    (game.eggs || []).forEach(drawEgg);
+  }
+  if (game.type === 'unicorn') {
+    C.save();
+    C.fillStyle = `rgba(0,0,0,${Math.min(0.7, Math.max(0, game.dim || 0))})`;
+    C.fillRect(0, 0, canvas.width, canvas.height);
+    C.restore();
+    (game.stars || []).forEach(drawStar);
+  }
+  if (game.type === 'pikachu') {
+    (game.batteries || []).forEach(drawBattery);
+  }
+  drawGameHUD(game);
 }
 
 function draw() {
@@ -253,6 +423,8 @@ function draw() {
   (worldEffects.bugs || []).forEach(b => drawBug(b, performance.now() * 0.01));
   (worldEffects.humans || []).forEach(drawHuman);
   (worldEffects.musicNotes || []).forEach(drawMusicNote);
+  drawScratchMarks();
+  drawGameOverlay(worldEffects.game);
 
   requestAnimationFrame(draw);
 }

@@ -134,6 +134,16 @@ const FALLBACK_DIALOGUES = {
     "⚡ Pikachu! *electric sparks*",
     "*happy bounce* Pika pika!",
     "Pikachu! Ketchup! Pika!"
+  ],
+  person: [
+    "u dont care about me...",
+    "u dont like me? i knew it.",
+    "*sigh* i'm just here i guess.",
+    "is it something i said?",
+    "fine. be like that.",
+    "i'm not in the mood.",
+    "*looks away dramatically*",
+    "whatever."
   ]
 };
 
@@ -186,24 +196,52 @@ async function triggerAutonomousBehavior(character, aiCallFunction = null) {
  * @returns {Promise<string>} Raw AI response
  * @throws {Error} If AI call fails or times out
  */
-async function callAI(character, mode = 'autonomous', timeout = 5000) {
-  // This is a placeholder for the actual AI call
-  // In production, this would call Ollama API
-  // For now, we throw an error to trigger fallback
-  
-  return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      reject(new Error('AI call timed out'));
-    }, timeout);
-    
-    // Simulate AI call failure for testing
-    // In production, replace with actual Ollama API call:
-    // const systemPrompt = buildSystemPrompt(character, mode);
-    // const response = await fetch('http://localhost:11434/api/generate', { ... });
-    
+async function callAI(character, mode = 'autonomous', timeout = 8000) {
+  const systemPrompt = buildSystemPrompt(character, mode);
+  const prompt = buildAutonomousPrompt(character);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'phi3:latest',
+        system: systemPrompt,
+        prompt,
+        stream: false,
+        options: { temperature: 0.9, num_predict: 150 }
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) throw new Error(`Ollama HTTP ${response.status}`);
+    const data = await response.json();
+    return data.response || '{}';
+  } finally {
     clearTimeout(timeoutId);
-    reject(new Error('AI not available'));
-  });
+  }
+}
+
+/**
+ * Build an autonomous-mode prompt for a character
+ * @param {string} character - Character name
+ * @returns {string} Prompt text
+ */
+function buildAutonomousPrompt(character) {
+  const prompts = {
+    cat:        'You are bored and want to do something mischievous or cute. Decide what to do.',
+    dog:        'You have so much energy! Decide your next playful action.',
+    lizard:     'You are basking peacefully. Decide what to do next.',
+    snake:      'You feel mischievous. What dramatic thing will you do?',
+    unicorn:    'The magic is strong today! Decide your most spectacular action.',
+    jigglypuff: 'You really want to sing or get attention. What will you do?',
+    pikachu:    'You feel electrically charged! What will you do?',
+    person:     'You feel ignored and moody. What sarcastic or needy thing will you say?',
+  };
+  return prompts[character] || 'Decide what to do next on your own.';
 }
 
 /**

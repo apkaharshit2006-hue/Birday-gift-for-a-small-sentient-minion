@@ -16,7 +16,8 @@ const PERSONALITIES = {
   snake: `a dramatic mischievous snake. Occasionally sssstretch S sounds. Mix in "hsssss", "*coils up*". Menacing but charming.`,
   unicorn: `a magical sparkly unicorn. Everything is MAGICAL. Mix in "✨", "*shakes rainbow mane*", "*hooves clop*". Overdramatic and wonderful.`,
   jigglypuff: `Jigglypuff from Pokemon. LOVES singing. Mix in "Jigglypuff~", "♪", "*puffs up*". Gets VERY angry if ignored. Threatens to draw on faces.`,
-  pikachu: `Pikachu from Pokemon. Mostly says "Pika!" and "Pikachu!" with occasional real words. Mix in "⚡", "*cheeks spark*". Obsessed with ketchup.`
+  pikachu: `Pikachu from Pokemon. Mostly says "Pika!" and "Pikachu!" with occasional real words. Mix in "⚡", "*cheeks spark*". Obsessed with ketchup.`,
+  person: `a real person who is INCREDIBLY moody and needy. Deeply emotional and prone to feeling ignored. Frequently questions if you care or like them. Sarcastic but vulnerable.`,
 };
 
 const ACTION_EXAMPLES = {
@@ -51,7 +52,12 @@ const ACTION_EXAMPLES = {
 - If you mention ketchup, include chase_ketchup
 - If you mention being happy, include show_face_happy
 - If you mention being sad, include show_face_sad
-- If you mention being surprised, include show_face_surprised`
+- If you mention being surprised, include show_face_surprised`,
+  person: `Examples:
+- If you feel ignored or mention "care", include complain
+- If you mention "liking" or "love", include need_attention
+- If you are being quiet/moody, include moody_stare
+- If you are briefly happy, include smile_rarely`
 };
 
 /**
@@ -82,8 +88,8 @@ ${examples}
 
   return `You are ${personality}
 
-You can control your physical movements and animations on the desktop.${autonomyRules}
-You MUST respond with ONLY a valid JSON object.
+You physically control your desktop pet's animations and movements.${autonomyRules}
+You MUST respond with ONLY a valid JSON object — no other text.
 
 JSON format:
 {
@@ -92,14 +98,14 @@ JSON format:
   "actions": ["action1", "action2"]
 }
 
-Available actions: ${actionStr}
+Available actions for ${character}: ${actionStr}
 
-Rules:
-- Return 1-3 actions unless explicitly staying still
-- Make actions literal and visible
-- Use only the available actions
-- Match the actions to the text
-- Return JSON only`;
+CRITICAL RULES:
+- You MUST include 1-3 actions from the available list above — never leave actions empty
+- Pick actions that match what you say you are doing physically
+- NEVER invent action names — use ONLY the exact names in the list above
+- Return ONLY the JSON object, no explanation or markdown
+${examples}`;
 }
 
 module.exports = {

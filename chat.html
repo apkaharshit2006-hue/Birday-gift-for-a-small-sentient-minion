@@ -90,6 +90,9 @@ html, body {
 <script>
 const { ipcRenderer } = require('electron');
 const { AI_MODEL, buildSystemPrompt, parseResponse } = require('./pet-ai');
+const SynchronizationValidator = require('./synchronization-validator');
+const DebugLogger = require('./debug-logger');
+const CoherenceMetricsEngine = require('./coherence-metrics-engine');
 
 const PETS = {
   cat:        { emoji:'🐈', name:'Cat' },
@@ -105,6 +108,7 @@ let currentPet = 'cat';
 let isThinking = false;
 let thinkingEl = null;
 let aiEnabled = true;
+let debugMode = false; // Toggle with Ctrl+D
 
 ipcRenderer.on('set-pet', (e, pet) => {
   currentPet = pet;
@@ -125,17 +129,31 @@ function timeStr() {
   return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 }
 
-function addMessage(role, text, actions=[]) {
+function addMessage(role, text, actions=[], validationResult=null) {
   const msgs = document.getElementById('messages');
   const p = PETS[currentPet] || PETS.cat;
   const div = document.createElement('div');
   div.className = `msg ${role}`;
+  
+  // Show coherence score in debug mode
+  let debugInfo = '';
+  if (debugMode && validationResult && role === 'pet') {
+    const score = validationResult.coherenceScore || 0;
+    const scoreColor = score >= 70 ? '#4caf50' : score >= 50 ? '#ff9800' : '#f44336';
+    debugInfo = `<div style="font-size:9px;color:${scoreColor};margin-top:2px;">Coherence: ${score.toFixed(0)}%</div>`;
+    
+    if (validationResult.mismatches && validationResult.mismatches.length > 0) {
+      debugInfo += `<div style="font-size:9px;color:#ff9800;margin-top:1px;">⚠ ${validationResult.mismatches.length} mismatch(es)</div>`;
+    }
+  }
+  
   const actionPills = role === 'pet' && actions.length
     ? `<div class="msg-actions">${actions.map(a => `<span class="action-pill">▶ ${a.replace(/_/g,' ')}</span>`).join('')}</div>`
     : '';
   div.innerHTML = `
     <div class="msg-bubble">${text}</div>
     ${actionPills}
+    ${debugInfo}
     <div class="msg-time">${role === 'pet' ? p.emoji + ' ' : ''}${timeStr()}</div>
   `;
   msgs.appendChild(div);
@@ -196,9 +214,32 @@ async function sendMessage() {
 
   try {
     const raw = await askOllama(text);
+    
+    // Log raw response in debug mode
+    if (debugMode) {
+      DebugLogger.logRawResponse(raw, currentPet);
+    }
+    
     const parsed = parseResponse(currentPet, raw);
+    
+    // Log parsed response in debug mode
+    if (debugMode) {
+      DebugLogger.logParsedResponse(parsed, currentPet);
+    }
+    
+    // Validate response
+    const validationResult = SynchronizationValidator.validate(parsed, currentPet);
+    
+    // Log validation result in debug mode
+    if (debugMode) {
+      DebugLogger.logValidation(validationResult, currentPet);
+    }
+    
+    // Record metrics
+    CoherenceMetricsEngine.recordResponse(parsed, currentPet, 'chat');
+    
     hideThinking();
-    addMessage('pet', parsed.text, parsed.actions);
+    addMessage('pet', parsed.text, parsed.actions, validationResult);
     ipcRenderer.send('pet-response', parsed);
   } catch (err) {
     hideThinking();
@@ -217,6 +258,23 @@ document.getElementById('msg-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
+  }
+  // Toggle debug mode with Ctrl+D
+  if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    debugMode = !debugMode;
+    document.getElementById('status').textContent = debugMode 
+      ? '🔍 debug mode on' 
+      : (aiEnabled ? 'ready to chat' : 'AI is off');
+    
+    // Show debug info message
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg pet';
+    div.style.opacity = '0.6';
+    div.innerHTML = `<div class="msg-bubble" style="font-size:10px;font-style:italic;">Debug mode ${debugMode ? 'enabled' : 'disabled'}. ${debugMode ? 'Coherence scores will be shown.' : ''}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
   }
 });
 

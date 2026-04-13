@@ -81,3 +81,8 @@ coverage/
 
 # Electron build
 out/
+dist/
+*.dmg
+*.zip
+*.pkg
+desktop-cat-project.zip

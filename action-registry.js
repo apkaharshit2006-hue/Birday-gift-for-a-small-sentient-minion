@@ -13,7 +13,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['scratch', 'chase_mouse', 'play_yarn', 'purr']
@@ -22,7 +22,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['fetch', 'howl', 'play_mug', 'zoom']
@@ -31,7 +31,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['hunt_bug', 'wall_crawl', 'tongue_flick']
@@ -40,7 +40,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'sit_idle',
+      'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['hiss', 'orbit', 'slither_random', 'coil']
@@ -49,7 +49,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['rainbow_vomit', 'eat_cupcake', 'gallop']
@@ -58,7 +58,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: ['sing', 'take_mic', 'angry_scribble']
@@ -67,7 +67,7 @@ const ACTION_LISTS = {
     universal: [
       'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
       'run_left', 'run_right', 'run_random',
-      'jump', 'sit_idle',
+      'jump', 'sit_idle', 'start_mini_game',
       'happy_bounce', 'sad_droop', 'surprised_jump'
     ],
     signature: [
@@ -75,6 +75,15 @@ const ACTION_LISTS = {
       'show_face_happy', 'show_face_sad', 'show_face_surprised',
       'show_face_smug', 'show_face_derp'
     ]
+  },
+  person: {
+    universal: [
+      'walk_left', 'walk_right', 'walk_to_center', 'walk_random',
+      'run_left', 'run_right', 'run_random',
+      'jump', 'sit_idle', 'start_mini_game',
+      'happy_bounce', 'sad_droop', 'surprised_jump'
+    ],
+    signature: ['moody_stare', 'complain', 'need_attention', 'smile_rarely']
   }
 };
 

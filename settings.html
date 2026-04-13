@@ -234,6 +234,9 @@ body {
     <div class="animal-card" data-pet="pikachu">
       <span class="emoji">⚡</span><span class="name">Pikachu</span>
     </div>
+    <div class="animal-card" data-pet="person">
+      <span class="emoji">🙋</span><span class="name">Person</span>
+    </div>
   </div>
 
   <div class="section-title">Behaviours — <span id="pet-label">Cat</span></div>
@@ -295,11 +298,18 @@ const PET_BEHAVIOURS = {
     { id:'faces',   name:'5 anime meme faces',         desc:'Click Pikachu to cycle expressions'   },
     { id:'cheeks',  name:'Electric cheek sparks',      desc:'Red cheeks spark with ⚡'              },
   ],
+  person: [
+    { id:'complain',     name:'Moody Complaint',     desc:'"u dont care about me" periodically' },
+    { id:'need_attention', name:'Need Attention',     desc:'"u dont like me?" periodically'      },
+    { id:'moody_stare',  name:'Moody Staring',       desc:'Stares at you judgingly'            },
+    { id:'walk_random',  name:'Pace Around',         desc:'Walks around restlessly'            },
+  ],
 };
 
 const petNames = {
   cat:'Cat', dog:'Dog', lizard:'Lizard', snake:'Snake',
-  unicorn:'Unicorn', jigglypuff:'Jigglypuff', pikachu:'Pikachu'
+  unicorn:'Unicorn', jigglypuff:'Jigglypuff', pikachu:'Pikachu',
+  person:'Person'
 };
 
 let currentPet = 'cat';

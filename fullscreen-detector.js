@@ -77,12 +77,12 @@ function checkAccessibilityPermissions(callback) {
 /**
  * Check if frontmost macOS application is in fullscreen (async, non-blocking)
  */
-function checkMacOSFullscreenAsync(callback) {
+function checkMacOSFullscreenAsync(excludeWindows, callback) {
   // First check if we have accessibility permissions
   checkAccessibilityPermissions((hasPermission) => {
     if (!hasPermission) {
       // No permissions - use fallback method
-      return callback(checkFullscreenFallback());
+      return callback(checkFullscreenFallback(excludeWindows));
     }
     
     // We have permissions - use AppleScript
@@ -92,7 +92,7 @@ function checkMacOSFullscreenAsync(callback) {
       (error, stdout) => {
         if (error) {
           // Fallback on error
-          return callback(checkFullscreenFallback());
+          return callback(checkFullscreenFallback(excludeWindows));
         }
         
         const result = stdout.toString().trim();
@@ -106,7 +106,7 @@ function checkMacOSFullscreenAsync(callback) {
  * Fallback fullscreen detection using screen bounds
  * Detects if any window covers the entire screen
  */
-function checkFullscreenFallback() {
+function checkFullscreenFallback(excludeWindows = []) {
   try {
     const { BrowserWindow, screen } = require('electron');
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -120,6 +120,11 @@ function checkFullscreenFallback() {
       
       const [winWidth, winHeight] = win.getSize();
       const [x, y] = win.getPosition();
+      
+      // Skip excluded windows
+      if (excludeWindows.includes(win)) {
+        continue;
+      }
       
       // Check if window covers entire screen
       if (winWidth >= width - 10 && winHeight >= height - 10 && x <= 10 && y <= 10) {
@@ -157,7 +162,7 @@ function isSystemInFullscreenAsync(excludeWindows = [], callback) {
   
   // Then check macOS native apps (slower, async)
   if (process.platform === 'darwin') {
-    checkMacOSFullscreenAsync(callback);
+    checkMacOSFullscreenAsync(excludeWindows, callback);
   } else {
     callback(false);
   }
