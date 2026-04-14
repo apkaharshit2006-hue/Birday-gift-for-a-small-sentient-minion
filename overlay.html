@@ -291,7 +291,8 @@ function drawSnakeBody(body) {
     const r = 4 + (1 - ratio) * 4;
     C.beginPath();
     C.arc(p.x, p.y, r, 0, Math.PI * 2);
-    C.fillStyle = `rgba(30, ${120 + Math.floor(80 * ratio)}, 30, 0.9)`;
+    // Pink gradient for snake body
+    C.fillStyle = `rgba(255, ${150 + Math.floor(60 * ratio)}, ${180 + Math.floor(40 * ratio)}, 0.9)`;
     C.fill();
   });
 }

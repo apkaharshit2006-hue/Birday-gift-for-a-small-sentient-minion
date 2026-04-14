@@ -2732,14 +2732,14 @@
                 if (blink) {
                     C.beginPath();
                     C.arc(ex, -1, 3.5, Math.PI + 0.4, -0.4);
-                    C.strokeStyle = "#4a148c";
+                    C.strokeStyle = "#ad1457"; // dark pink
                     C.lineWidth = 1.8;
                     C.lineCap = "round";
                     C.stroke();
                 } else {
                     C.beginPath();
                     C.ellipse(ex, -1, 3.5, 4.5, 0, 0, Math.PI * 2);
-                    C.fillStyle = "#1a0050";
+                    C.fillStyle = "#4a0072"; // deep violet/pink
                     C.fill();
                     C.beginPath();
                     C.arc(ex - 0.8, -2.5, 1.2, 0, Math.PI * 2);
@@ -2757,7 +2757,7 @@
             C.beginPath();
             C.moveTo(-4, 9);
             C.quadraticCurveTo(0, 12, 4, 9);
-            C.strokeStyle = "#4a148c";
+            C.strokeStyle = "#ad1457"; // dark pink
             C.lineWidth = 1.2;
             C.lineCap = "round";
             C.stroke();
@@ -2886,20 +2886,20 @@
             C.fill();
             C.beginPath();
             C.ellipse(0, 3, 5, 3.5, 0, 0, Math.PI * 2);
-            C.fillStyle = "#333";
+            C.fillStyle = "#ad1457"; // dark pink nose
             C.fill();
             [-8, 8].forEach((ex) => {
                 if (!M.eyeOpen) {
                     C.beginPath();
                     C.arc(ex, -4, 3, Math.PI + 0.3, -0.3);
-                    C.strokeStyle = "#333";
+                    C.strokeStyle = "#ad1457";
                     C.lineWidth = 1.8;
                     C.lineCap = "round";
                     C.stroke();
                 } else {
                     C.beginPath();
                     C.arc(ex, -4, 4, 0, Math.PI * 2);
-                    C.fillStyle = "#1a0a00";
+                    C.fillStyle = "#4a0072"; // dark violet/pink eye
                     C.fill();
                     C.beginPath();
                     C.arc(ex - 1, -5, 1.3, 0, Math.PI * 2);
@@ -3047,7 +3047,7 @@
             C.stroke();
             C.beginPath();
             C.arc(-4, -2, 4, 0, Math.PI * 2);
-            C.fillStyle = "#1a0a00";
+            C.fillStyle = "#4a0072"; // dark violet/pink eye
             C.fill();
             C.beginPath();
             C.arc(-3, -3, 1.5, 0, Math.PI * 2);
@@ -3062,7 +3062,7 @@
                 C.beginPath();
                 C.moveTo(-14, 1);
                 C.lineTo(-14 - tl * 0.6, 1);
-                C.strokeStyle = "#e53935";
+                C.strokeStyle = "#ff1493"; // deep pink tongue
                 C.lineWidth = 2;
                 C.lineCap = "round";
                 C.stroke();
@@ -3118,11 +3118,11 @@
             const ex = M.facing * 18;
             C.beginPath();
             C.arc(ex, -3, 4, 0, Math.PI * 2);
-            C.fillStyle = "#f9a825";
+            C.fillStyle = "#ff80ab"; // pink eye
             C.fill();
             C.beginPath();
             C.arc(ex, -3, 2, 0, Math.PI * 2);
-            C.fillStyle = "#111";
+            C.fillStyle = "#4a0072"; // dark violet/pink pupil
             C.fill();
             C.beginPath();
             C.arc(ex + 0.5, -3.5, 1, 0, Math.PI * 2);
@@ -3133,7 +3133,7 @@
                 C.beginPath();
                 C.moveTo(M.facing * 24, 1);
                 C.lineTo(tx, 1);
-                C.strokeStyle = "#e53935";
+                C.strokeStyle = "#ff1493"; // deep pink tongue
                 C.lineWidth = 2.5;
                 C.lineCap = "round";
                 C.stroke();
@@ -3147,7 +3147,7 @@
             if (M.hissing) {
                 C.globalAlpha = 0.9;
                 C.font = "bold 11px monospace";
-                C.fillStyle = "#e53935";
+                C.fillStyle = "#ff1493";
                 C.fillText("HSSSSS", M.facing * 30, -10);
                 C.globalAlpha = 1;
             }
