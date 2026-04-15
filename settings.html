@@ -209,6 +209,13 @@ body {
         <div class="toggle-track"></div>
       </label>
     </div>
+    <div class="behaviour-row">
+      <div class="behaviour-info">
+        <div class="behaviour-name">Software Updates</div>
+        <div id="update-status" class="behaviour-desc">Check for latest features and bug fixes</div>
+      </div>
+      <button class="btn btn-close" id="btn-update" style="flex:0; padding: 6px 12px; font-size: 11px;">Check Now</button>
+    </div>
   </div>
 
   <div class="section-title">Choose Your Pet</div>
@@ -357,6 +364,22 @@ document.querySelectorAll('.animal-card').forEach(card => {
 
 document.getElementById('btn-quit').addEventListener('click', () => ipcRenderer.send('quit-app'));
 document.getElementById('btn-close').addEventListener('click', () => window.close());
+
+const updateBtn = document.getElementById('btn-update');
+const updateStatus = document.getElementById('update-status');
+
+if (updateBtn) {
+  updateBtn.addEventListener('click', () => {
+    updateStatus.textContent = 'Checking...';
+    updateBtn.disabled = true;
+    ipcRenderer.send('check-for-updates-manual');
+  });
+}
+
+ipcRenderer.on('update-check-result', (e, msg) => {
+  if (updateStatus) updateStatus.textContent = msg;
+  if (updateBtn) updateBtn.disabled = false;
+});
 
 const aiToggle = document.getElementById('ai-enabled');
 aiToggle.addEventListener('change', () => {

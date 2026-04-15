@@ -419,16 +419,45 @@ function launchApp() {
   checkForGitUpdates();
 }
 
+ipcMain.on("check-for-updates-manual", (e) => {
+  autoUpdater
+    .checkForUpdates()
+    .then((result) => {
+      if (!result || !result.updateInfo) {
+        checkForGitUpdates((gitMsg) => {
+          if (settingsWin && !settingsWin.isDestroyed()) {
+            settingsWin.webContents.send("update-check-result", gitMsg);
+          }
+        });
+      } else {
+        if (settingsWin && !settingsWin.isDestroyed()) {
+          settingsWin.webContents.send(
+            "update-check-result",
+            "New release found! Downloading...",
+          );
+        }
+      }
+    })
+    .catch((err) => {
+      checkForGitUpdates((gitMsg) => {
+        if (settingsWin && !settingsWin.isDestroyed()) {
+          settingsWin.webContents.send("update-check-result", gitMsg);
+        }
+      });
+    });
+});
+
 /**
  * Checks for updates via Git and handles stashing to preserve local changes
  */
-function checkForGitUpdates() {
+function checkForGitUpdates(callback) {
   console.log("[UpdateSystem] Checking for cloud updates...");
 
   // Use a slightly smarter approach: check if we are actually in a git repo first
   exec("git rev-parse --is-inside-work-tree", { cwd: __dirname }, (gitErr) => {
     if (gitErr) {
       console.log("[UpdateSystem] Not a git repository, skipping git updates.");
+      if (callback) callback("Not a git repository.");
       return;
     }
 
@@ -440,13 +469,21 @@ function checkForGitUpdates() {
         exec("git stash pop", { cwd: __dirname }, () => {
           if (!pullError && stdout && stdout.includes("Already up to date")) {
             console.log("[UpdateSystem] Application is up to date.");
+            if (callback) callback("Up to date.");
           } else if (!pullError) {
-            console.log("[UpdateSystem] Application updated from cloud! Refreshing soon...");
+            console.log(
+              "[UpdateSystem] Application updated from cloud! Refreshing soon...",
+            );
             if (petWin && !petWin.isDestroyed()) {
-              petWin.webContents.send("git-update-message", "I just got an update from GitHub! I'm smarter now.");
+              petWin.webContents.send(
+                "git-update-message",
+                "I just got an update from GitHub! I'm smarter now.",
+              );
             }
+            if (callback) callback("Updated successfully!");
           } else {
             console.error("[UpdateSystem] Update check failed:", pullError);
+            if (callback) callback("Update failed. Check console.");
           }
         });
       });
