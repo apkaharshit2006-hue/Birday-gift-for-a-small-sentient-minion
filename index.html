@@ -159,33 +159,23 @@
     </div>
     <script>
         const { ipcRenderer } = require("electron");
-        const fs = require("fs");
         const path = require("path");
 
         // Safe directory resolution for Renderer process
         const APP_ROOT = process.cwd();
 
-        function toDataURI(fileName) {
-            try {
-                const filePath = path.join(APP_ROOT, fileName);
-                const bitmap = fs.readFileSync(filePath);
-                return `data:image/png;base64,${bitmap.toString("base64")}`;
-            } catch (e) {
-                console.error("Failed to load image as Data URI:", fileName, e);
-                return "";
-            }
-        }
-
-        // Initialization Wrapper to prevent crashes from stopping the whole script
-        let personImages = [new Image(), new Image()];
+        let personImages = [null, null];
         try {
             const {
                 AI_MODEL,
                 buildSystemPrompt,
                 parseResponse,
             } = require("./pet-ai");
-            personImages[0].src = toDataURI("person_1.png");
-            personImages[1].src = toDataURI("person_2.png");
+            // Load person images as file:// URLs — no sync disk read or base64 encoding
+            personImages[0] = new Image();
+            personImages[0].src = `file://${path.join(APP_ROOT, "person_1.png")}`;
+            personImages[1] = new Image();
+            personImages[1].src = `file://${path.join(APP_ROOT, "person_2.png")}`;
         } catch (err) {
             console.error("Initialization error:", err);
         }
@@ -227,19 +217,23 @@
         // ═══════════════════════════════════════════
         // SCREEN INFO
         // ═══════════════════════════════════════════
-        let sw = 1440,
-            sh = 900,
-            wx = 700,
-            wy = 680;
+        PET.sw = 1440;
+        PET.sh = 900;
+        PET.wx = 700;
+        PET.wy = 680;
+        let sw = PET.sw,
+            sh = PET.sh,
+            wx = PET.wx,
+            wy = PET.wy;
         async function refreshScreen() {
             const i = await ipcRenderer.invoke("get-screen-info");
-            sw = i.sw;
-            sh = i.sh;
-            wx = i.wx;
-            wy = i.wy;
+            PET.sw = sw = i.sw;
+            PET.sh = sh = i.sh;
+            PET.wx = wx = i.wx;
+            PET.wy = wy = i.wy;
         }
         refreshScreen();
-        setInterval(refreshScreen, 1500);
+        setInterval(refreshScreen, 15000);
         function moveWin(x, y) {
             const next = clampPetWindow(x, y);
             wx = next.x;
@@ -249,7 +243,10 @@
 
         // Send effects data to fullscreen overlay window
         // Converts canvas-local coords to screen coords
+        let _overlayFrameThrottle = 0;
         function sendOverlay(gamePayload) {
+            // Throttle IPC to every 3 frames (~20msgs/sec at 60fps)
+            if (++_overlayFrameThrottle % 3 !== 0 && gamePayload === undefined) return;
             const resolvedGame =
                 gamePayload !== undefined ? gamePayload : Game.overlayPayload;
             const hasGame =
@@ -376,17 +373,7 @@
         }
 
         function rewardAffection(amount) {
-            try {
-                const settings = JSON.parse(
-                    localStorage.getItem("app_settings") || "{}",
-                );
-                settings.affectionPoints =
-                    (settings.affectionPoints || 0) + amount;
-                localStorage.setItem(
-                    "app_settings",
-                    JSON.stringify(settings),
-                );
-            } catch (e) { }
+            ipcRenderer.invoke("reward-affection", amount).catch(() => {});
         }
 
         // ===== Input bridge (overlay -> pet window) =====
@@ -484,117 +471,6 @@
                 }
             });
             Game.overlayPayload = { type: "cat", mice };
-        }
-
-        // ===== Dog: High-Speed Fetch =====
-        function initDogGame() {
-            Game.state.bone = {
-                x: sw * 0.5,
-                y: sh * 0.4,
-                vx: 7,
-                vy: 5,
-                angle: 0,
-            };
-            Game.state.combo = 0;
-            Game.state.comboTimer = 0;
-            Game.state.catchCooldown = 0;
-        }
-        function updateDogGame(dt) {
-            const b = Game.state.bone;
-            b.x += b.vx;
-            b.y += b.vy;
-            b.angle += 0.06;
-            if (b.x < 30 || b.x > sw - 30) b.vx *= -1;
-            if (b.y < 30 || b.y > sh - 30) b.vy *= -1;
-            const dx = b.x - petCenterX(),
-                dy = b.y - petCenterY();
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (Game.state.catchCooldown > 0)
-                Game.state.catchCooldown -= 1;
-            if (Game.state.comboTimer > 0) {
-                Game.state.comboTimer -= 1;
-                if (Game.state.comboTimer <= 0) Game.state.combo = 0;
-            }
-            if (dist < 40 && Game.state.catchCooldown <= 0) {
-                M.gameScore += 1;
-                Game.state.combo =
-                    Game.state.comboTimer > 0
-                        ? Game.state.combo + 1
-                        : 1;
-                Game.state.comboTimer = 40;
-                Game.state.catchCooldown = 12;
-                b.vx *= 1.07;
-                b.vy *= 1.07;
-            }
-            if (currentPet === "dog") {
-                M.tx = b.x - PET_ANCHOR_X;
-                M.ty = b.y - PET_ANCHOR_Y;
-                M.mood = "run";
-            }
-            Game.overlayPayload = {
-                type: "dog",
-                bone: b,
-                combo: Game.state.combo,
-            };
-        }
-
-        // ===== Lizard: Fly Swatter =====
-        function spawnGameFly() {
-            bugs.push({
-                x: 20 + Math.random() * (sw - 40),
-                y: 40 + Math.random() * (sh - 140),
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4,
-                life: 999,
-                dead: false,
-                stunned: false,
-                stunTimer: 0,
-                game: true,
-            });
-        }
-        function initLizardGame() {
-            bugs = [];
-            for (let i = 0; i < 6; i++) spawnGameFly();
-            Game.state.tongue = null;
-        }
-        function updateLizardGame(dt) {
-            // Clean version comes later in file
-        }
-
-        // ===== Snake: Growth Game =====
-        function initSnakeGame() {
-            // Clean version comes later in file
-        }
-        function updateSnakeGame(dt) {
-            // Clean version comes later in file
-        }
-        // ===== Unicorn: Star Follower =====
-        function initUnicornGame() {
-            // Clean version comes later in file
-        }
-        function updateUnicornGame(dt) {
-            // Clean version comes later in file
-        }
-        // ===== Jigglypuff: Rhythm Clicker =====
-        function initJigglyGame() {
-            // Clean version comes later in file
-        }
-        function updateJigglyGame(dt) {
-            // Clean version comes later in file
-        }
-        // ===== Pikachu: Battery Charge =====
-        function initPikaGame() {
-            // Clean version comes later in file
-        }
-        function updatePikaGame(dt) {
-            // Clean version comes later in file
-        }
-        // ===== Person: Mood Matcher =====
-        function initPersonGame() {
-            // Clean version comes later in file
-        }
-        function updatePersonGame(dt) {
-            // Clean version comes later in file
         }
 
         // ===== Dog: High-Speed Fetch =====
@@ -1032,10 +908,19 @@
             Game.overlayPayload = { type: "person" };
         }
 
+        // Cached canvas pixel data (updated once per frame, used by scribble-fix for click-through)
+        let __cachedCanvasData = null;
+        window.__getCachedCanvasAlpha = (x, y) => {
+            if (!__cachedCanvasData) return 0;
+            const idx = (Math.floor(y) * 220 + Math.floor(x)) * 4 + 3;
+            return __cachedCanvasData[idx];
+        };
+
         // ═══════════════════════════════════════════
         // STATE
         // ═══════════════════════════════════════════
-        let currentPet = "cat";
+        PET.currentPet = "cat";
+        let currentPet = PET.currentPet;
         let tick = 0;
         let lastFrame = performance.now();
         let particles = [];
@@ -1225,6 +1110,7 @@
             const wasDrag = dragMoved;
             drag = null;
             dragMoved = false;
+            if (wasDrag) refreshScreen(); // Refresh screen info after drag
             if (!wasDrag) {
                 const now = Date.now();
                 if (now - lastClick < 500) {
@@ -1361,7 +1247,7 @@
         // ═══════════════════════════════════════════
         function switchPet(name) {
             if (M.inGame) endMiniGame(false);
-            currentPet = name;
+            PET.currentPet = currentPet = name;
             stopJigglyScribbleLoop();
             M.eating = false;
             M.howling = false;
@@ -5010,6 +4896,9 @@
                 }
                 C.globalAlpha = 1;
             }
+
+            // Cache full canvas pixels once per frame for click-through detection
+            __cachedCanvasData = C.getImageData(0, 0, 220, 220).data;
 
             // Send scribbles + lightning + rainbow to fullscreen overlay every frame
             sendOverlay();

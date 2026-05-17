@@ -12,6 +12,7 @@ const { exec } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 const {
   initAppSettings,
+  readAppSettings,
   getAppSettings,
   updateAppSettings,
 } = require("./app-settings");
@@ -260,6 +261,11 @@ ipcMain.on("toggle-behaviour", (e, data) => {
   if (petWin && !petWin.isDestroyed())
     petWin.webContents.send("toggle-behaviour", data);
 });
+ipcMain.handle("reward-affection", (e, amount) => {
+  const s = readAppSettings();
+  s.affectionPoints = (s.affectionPoints || 0) + amount;
+  updateAppSettings(s);
+});
 
 // ── Fullscreen Detection ──────────────────────────────────────────────────────
 
@@ -309,7 +315,7 @@ function startFullscreenDetection() {
 
   console.log("[Fullscreen] Starting optimized fullscreen detection");
 
-  // Check every 2 seconds (reduced frequency for better performance)
+  // Check every 5 seconds (reduced frequency; osascript result cached for 5s)
   fullscreenCheckInterval = setInterval(() => {
     // Exclude our own windows from the check
     const excludeWindows = [petWin, overlayWin, chatWin, settingsWin].filter(
@@ -324,7 +330,7 @@ function startFullscreenDetection() {
         wasFullscreenLastCheck = isFullscreen;
       }
     });
-  }, 2000); // Increased to 2 seconds for better performance
+  }, 5000);
 }
 
 /**
@@ -415,8 +421,6 @@ function launchApp() {
     // Optional: autoUpdater.quitAndInstall(); // You can also wait for human confirmation
   });
 
-  // ── Git Pull Update ─────────────────────────────────────────────────────────
-  checkForGitUpdates();
 }
 
 ipcMain.on("check-for-updates-manual", (e) => {

@@ -16,17 +16,15 @@ window.addEventListener('load', () => {
       let lastIgnore = null;
 
       document.addEventListener('mousemove', (e) => {
-        const ctx = canvas.getContext('2d');
-        try {
-          const pixel = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data;
-          const alpha = pixel[3]; // 0 = transparent, 255 = fully opaque
-          const shouldIgnore = alpha < 10; // transparent pixel = pass through
+        // Use cached canvas alpha (updated once per frame) instead of synchronous getImageData
+        const getAlpha = window.__getCachedCanvasAlpha;
+        const alpha = typeof getAlpha === 'function' ? getAlpha(e.offsetX, e.offsetY) : 255;
+        const shouldIgnore = alpha < 10;
 
-          if (shouldIgnore !== lastIgnore) {
-            lastIgnore = shouldIgnore;
-            ipcRenderer.send('set-mouse-ignore', shouldIgnore);
-          }
-        } catch(err) {}
+        if (shouldIgnore !== lastIgnore) {
+          lastIgnore = shouldIgnore;
+          ipcRenderer.send('set-mouse-ignore', shouldIgnore);
+        }
       });
 
       // When mouse leaves window, re-enable ignore so it stays click-through

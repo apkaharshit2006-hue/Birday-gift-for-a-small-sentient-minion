@@ -74,10 +74,23 @@ function checkAccessibilityPermissions(callback) {
   );
 }
 
+// Cache for macOS fullscreen check to avoid expensive osascript exec
+let _macOSFullscreenCache = null;
+let _macOSFullscreenCacheTime = 0;
+const FULLSCREEN_CACHE_TTL = 5000; // 5 seconds
+
 /**
  * Check if frontmost macOS application is in fullscreen (async, non-blocking)
+ * Results are cached for FULLSCREEN_CACHE_TTL ms to avoid expensive osascript exec.
  */
 function checkMacOSFullscreenAsync(excludeWindows, callback) {
+  const now = Date.now();
+
+  // Return cached result if fresh
+  if (_macOSFullscreenCache !== null && (now - _macOSFullscreenCacheTime) < FULLSCREEN_CACHE_TTL) {
+    return callback(_macOSFullscreenCache);
+  }
+
   // First check if we have accessibility permissions
   checkAccessibilityPermissions((hasPermission) => {
     if (!hasPermission) {
@@ -95,8 +108,10 @@ function checkMacOSFullscreenAsync(excludeWindows, callback) {
           return callback(checkFullscreenFallback(excludeWindows));
         }
         
-        const result = stdout.toString().trim();
-        callback(result === 'true');
+        const result = stdout.toString().trim() === 'true';
+        _macOSFullscreenCache = result;
+        _macOSFullscreenCacheTime = now;
+        callback(result);
       }
     );
   });
